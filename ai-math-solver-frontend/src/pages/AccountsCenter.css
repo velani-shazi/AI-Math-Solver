@@ -1,0 +1,368 @@
+.accounts-center-container {
+  margin-top: 72px; 
+  width: 100%;
+  min-height: calc(100vh - 72px);
+  background-color: #f6f4f4;
+  padding: 40px 20px;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+.accounts-center-wrapper {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+}
+
+.login-prompt-container {
+  margin-top: 72px;
+  padding: 80px 40px;
+  text-align: center;
+  min-height: calc(100vh - 72px);
+  background-color: #f6f4f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-prompt-heading {
+  color: #4f4f4f;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+
+.sidebar-container {
+  flex-shrink: 0;
+  width: 245px;
+}
+
+.sidebar {
+  width: 245px;
+  border: 1px solid #b9b5b5;
+  font-family: Arial, sans-serif;
+  font-size: 15px;
+  border-radius: 8px;
+  position: sticky;
+  top: 92px; 
+  background-color: #fff;
+  padding: 20px 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-heading {
+  text-align: center;
+  color: #db3f59;
+  margin: 0 0 20px 0;
+  font-size: 1.25rem;
+}
+
+.sidebar-item,
+.sidebar-item-logout {
+  display: flex;
+  align-items: center;
+  height: 60px;
+  padding: 0 20px;
+  gap: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.sidebar-item:hover,
+.sidebar-item-logout:hover {
+  background-color: #f5f5f5;
+}
+
+.sidebar-item-logout {
+  margin-top: 20px;
+  border-top: 1px solid #e0e0e0;
+  padding-top: 20px;
+}
+
+.sidebar-icon {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+}
+
+.sidebar-text {
+  color: #4f4f4f;
+  font-weight: 500;
+}
+
+/* Content Area */
+.content-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  max-width: 700px;
+}
+
+.content-section {
+  width: 100%;
+  border: 1px solid #b9b5b5;
+  padding: 30px;
+  font-family: Arial, sans-serif;
+  background-color: #fff;
+  border-radius: 8px;
+  color: #234f4f;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+}
+
+.section-heading {
+  color: #4f4f4f;
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+
+.section-heading-warning {
+  color: #db3f59;
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 20px;
+  row-gap: 20px;
+}
+
+.form-label {
+  font-weight: 600;
+  color: #4f4f4f;
+  display: flex;
+  align-items: center;
+}
+
+.form-input,
+.form-input-disabled {
+  border: 1px solid #ddd;
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: Arial, sans-serif;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #db3f59;
+}
+
+.form-input-disabled {
+  background-color: #f5f5f5;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.save-button {
+  margin-top: 20px;
+  background-color: #db3f59;
+  color: #fff;
+  font-size: 1.125rem;
+  font-weight: 700;
+  border-radius: 28px;
+  border: none;
+  width: 171px;
+  height: 49px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.save-button:hover:not(:disabled) {
+  background-color: #c23549;
+}
+
+.save-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.login-options-grid {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  column-gap: 20px;
+  row-gap: 20px;
+  align-items: center;
+}
+
+.settings-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.settings-row-history {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 0;
+  border-bottom: 1px solid #e0e0e0;
+  gap: 48%;
+}
+
+.settings-row-bookmarks {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 0;
+  border-bottom: 1px solid #e0e0e0;
+  gap: 44%;
+}
+
+.settings-row:last-child {
+  border-bottom: none;
+}
+
+.settings-label {
+  font-weight: 600;
+  font-size: 16px;
+  color: #4f4f4f;
+}
+
+.clear-button {
+  background-color: #db3f59;
+  color: #fff;
+  font-size: 1.125rem;
+  font-weight: 700;
+  border-radius: 28px;
+  border: none;
+  padding: 10px 30px;
+  width: 40%;
+  height: 49px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  flex-shrink: 0;
+}
+
+.clear-button:hover:not(:disabled) {
+  background-color: #c23549;
+}
+
+.clear-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.delete-warning {
+  margin-bottom: 20px;
+  color: #666;
+  line-height: 1.6;
+}
+
+.delete-button {
+  background-color: #dc3545;
+  color: #fff;
+  font-size: 1.125rem;
+  font-weight: 700;
+  border-radius: 28px;
+  border: none;
+  width: 171px;
+  height: 49px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  position: relative;
+  left: 35%;
+}
+
+.delete-button:hover:not(:disabled) {
+  background-color: #c82333;
+}
+
+.delete-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+@media screen and (max-width: 1024px) {
+  .accounts-center-wrapper {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .sidebar-container {
+    width: 100%;
+    max-width: 700px;
+  }
+
+  .sidebar {
+    position: relative;
+    top: 0;
+    width: 100%;
+  }
+
+  .content-container {
+    width: 100%;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .accounts-center-container {
+    margin-top: 70px;
+    padding: 20px 10px;
+  }
+
+  .login-prompt-container {
+    margin-top: 70px;
+    padding: 40px 20px;
+  }
+
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .login-options-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .content-section {
+    padding: 20px;
+  }
+
+  .save-button {
+    width: 100%;
+  }
+
+  .delete-button {
+    width: 100%;
+  }
+
+  .settings-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .clear-button {
+    width: 30%;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .sidebar-item,
+  .sidebar-item-logout {
+    height: 50px;
+    font-size: 14px;
+  }
+
+  .sidebar-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .section-heading,
+  .section-heading-warning {
+    font-size: 1.25rem;
+  }
+}

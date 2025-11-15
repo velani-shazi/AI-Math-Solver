@@ -1,0 +1,34 @@
+footer {
+  width: 100%;
+  min-height: 120px;
+  background-color: #fff;
+  color: #7a8795;
+  font-weight: 700;
+  display: flex;
+  gap: 5%;
+  padding: 15px 5%;
+  box-sizing: border-box;
+  flex-wrap: wrap;
+}
+
+.footer-company-logo {
+  width: 100%;
+  max-width: 180px;
+  height: 45px;
+  margin-bottom: 10px;
+}
+
+.company-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.company-info p {
+  margin: 5px 0;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.company-info p:hover {
+  cursor: pointer;
+  color: #db3f59;
+}

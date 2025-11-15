@@ -1,0 +1,337 @@
+.calculator-wrapper {
+  width: 100%;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.calculator-display {
+  background: #f8f9fa;
+  border-bottom: 2px solid #e9ecef;
+  padding: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+}
+
+.mathquill-editor {
+  min-height: 50px;
+  font-size: 16px;
+  padding: 10px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  width: 80%;
+  cursor: text;
+  box-sizing: border-box;
+}
+
+.solve-button {
+  width: 18%;
+  margin-left: 2%;
+  background-color: #db3f59;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.mathquill-editor:focus {
+  border-color: #3b82f6;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.mathquill-editor .mq-cursor {
+  border-color: #3b82f6 !important;
+}
+
+.mathquill-editor .mq-selection {
+  background: #3b82f6 !important;
+  background-color: rgba(59, 130, 246, 0.2) !important;
+}
+
+.mq-editable-field.mq-focused {
+  outline: none !important;
+}
+
+.calculator-toolbar {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #ddd;
+  padding: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.toolbar-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  width: 100%;
+}
+
+.toolbar-item {
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  background-color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 10px;
+  transition: background-color 0.2s;
+  flex: 1 1 auto;
+  min-width: 45px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toolbar-item:hover {
+  background-color: #e9ecef;
+}
+
+.toolbar-item.active {
+  background-color: #db3f59;
+  color: white;
+}
+
+.calculator-buttons {
+  padding: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.button-panel {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.button-panel.hide {
+  display: none !important;
+}
+
+.button-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+  gap: 3px;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.calc-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 4px;
+  border: 1px solid #ccc;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  min-height: 32px;
+  line-height: 1;
+  transition: all 0.2s;
+  user-select: none;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.calc-button:hover {
+  background-color: #e9ecef;
+  border-color: #db3f59;
+}
+
+.calc-button:active {
+  background-color: #dee2e6;
+  transform: translateY(1px);
+}
+
+.calc-button.math-display {
+  font-family: "Times New Roman", serif;
+}
+
+.sup {
+  vertical-align: super;
+  font-size: 0.8em;
+}
+
+.fraction {
+  display: inline-block;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.numerator,
+.denominator {
+  display: block;
+  font-size: 0.8em;
+}
+
+.numerator {
+  border-bottom: 1px solid black;
+  padding-bottom: 1px;
+}
+
+.denominator {
+  padding-top: 1px;
+}
+
+.sqrt {
+  position: relative;
+}
+
+.sqrt:before {
+  content: "√";
+  font-size: 1.2em;
+}
+
+.matrix-btn {
+  font-size: 9px;
+}
+
+.action-buttons {
+  display: flex;
+  padding: 8px;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.clear-math-button,
+.copy-button {
+  flex: 1;
+  border: 1px solid #ccc;
+  height: 36px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+
+.left-click, .right-click {
+  flex: 1;
+  border: 1px solid #ccc;
+  height: 36px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+
+.clear-math-button:hover,
+.copy-button:hover,
+.left-click:hover,
+.right-click:hover {
+  border-color: #db3f59;
+}
+
+@media screen and (min-width: 768px) {
+  .calculator-display {
+    padding: 15px;
+  }
+
+  .mathquill-editor {
+    min-height: 55px;
+    font-size: 18px;
+    padding: 12px;
+  }
+
+  .toolbar-tabs {
+    gap: 5px;
+  }
+
+  .toolbar-item {
+    padding: 8px 10px;
+    font-size: 12px;
+    min-width: 55px;
+  }
+
+  .button-grid {
+    grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+    gap: 4px;
+  }
+
+  .calc-button {
+    padding: 10px 6px;
+    font-size: 13px;
+    min-height: 38px;
+  }
+
+  .calculator-buttons {
+    padding: 12px;
+  }
+
+  .action-buttons {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .clear-math-button,
+  .copy-button {
+    height: 40px;
+    font-size: 15px;
+  }
+}
+
+@media screen and (min-width: 1024px) {
+  .calculator-display {
+    padding: 25px;
+  }
+
+  .mathquill-editor {
+    min-height: 65px;
+    font-size: 20px;
+    padding: 15px;
+  }
+
+  .toolbar-item {
+    padding: 10px 15px;
+    font-size: 14px;
+    min-width: 70px;
+  }
+
+  .button-grid {
+    grid-template-columns: repeat(11, 1fr);
+    gap: 5px;
+  }
+
+  .calc-button {
+    padding: 12px 8px;
+    font-size: 15px;
+    min-height: 42px;
+  }
+
+  .calculator-buttons {
+    padding: 18px;
+  }
+
+  .action-buttons {
+    padding: 18px;
+    gap: 20px;
+  }
+
+  .clear-math-button,
+  .copy-button {
+    height: 44px;
+    font-size: 16px;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

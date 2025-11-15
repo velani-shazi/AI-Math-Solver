@@ -1,0 +1,59 @@
+.bread-crumbs {
+  margin-top: 80px;
+  margin-left: 24px;
+  margin-bottom: 14px;
+  color: #7a8795;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  align-self: start;
+  text-decoration: none;
+  gap: 6px;
+  display: flex;
+  align-items: baseline;
+}
+
+.bread-crumbs a {
+  color: #7a8795;
+  font-family: Arial, sans-serif;
+  font-style: normal;
+  text-decoration: none;
+  font-size: 11pt;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bread-crumbs a:hover {
+  color: #db3f59;
+  text-decoration: underline;
+}
+
+.bread-crumbs h1 {
+  font-family: Arial, sans-serif;
+  display: inline-block;
+  margin: 0;
+  font-size: 15pt;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 60vw;
+  color: #333;
+  font-weight: 400;
+}
+
+@media screen and (max-width: 768px) {
+  .bread-crumbs {
+    margin-left: 15px;
+    margin-right: 15px;
+  }
+
+  .bread-crumbs h1 {
+    font-size: 12pt;
+    max-width: 70vw;
+  }
+
+  .bread-crumbs a {
+    font-size: 10pt;
+  }
+}
