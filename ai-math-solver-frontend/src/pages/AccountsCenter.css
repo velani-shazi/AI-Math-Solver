@@ -45,11 +45,13 @@
   font-family: Arial, sans-serif;
   font-size: 15px;
   border-radius: 8px;
-  position: sticky;
-  top: 92px; 
+  position: fixed;
+  top: 92px;
   background-color: #fff;
   padding: 20px 0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  max-height: calc(100vh - 112px);
+  overflow-y: auto;
 }
 
 .sidebar-heading {
