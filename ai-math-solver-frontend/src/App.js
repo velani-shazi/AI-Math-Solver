@@ -67,13 +67,15 @@ function App() {
     <BrowserRouter>
       <div className="App">
         <Navbar logo={logo} user={user} onLogout={handleLogout}/>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/solutions" element={<Solutions user={user}/>} />
-          <Route path="/bookmarks" element={<BookmarksPage user={user}/>} />
-          <Route path="/login" element={<LoginPage onLogin={handleLogin}/>} />
-          <Route path="/account" element={<AccountsCenter user={user} onLogout={handleLogout}/>} />
-        </Routes>
+        <div className="App-content">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/solutions" element={<Solutions user={user}/>} />
+            <Route path="/bookmarks" element={<BookmarksPage user={user}/>} />
+            <Route path="/login" element={<LoginPage onLogin={handleLogin}/>} />
+            <Route path="/account" element={<AccountsCenter user={user} onLogout={handleLogout}/>} />
+          </Routes>
+        </div>
         <Footer logo={logo} />
       </div>
     </BrowserRouter>

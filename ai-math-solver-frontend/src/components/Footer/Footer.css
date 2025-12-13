@@ -9,6 +9,7 @@ footer {
   padding: 15px 5%;
   box-sizing: border-box;
   flex-wrap: wrap;
+  margin-top: auto;
 }
 
 .footer-company-logo {
