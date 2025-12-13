@@ -133,7 +133,9 @@ const getAuthHeaders = () => {
       id: item.id,
       date: new Date(item.timestamp).toLocaleDateString(),
       time: new Date(item.timestamp).toLocaleTimeString(),
-      latexContent: item.problem || item.solution
+      latexContent: item.problem || item.solution,
+      problem: item.problem,
+      solution: item.solution
     }));
     
     setBookmarks(transformedData);
@@ -176,12 +178,13 @@ const getAuthHeaders = () => {
   }
 };
 
-  const handleBookmarkClick = (latexContent) => {
-    const cleanLatex = latexContent.replace(/^\$\$|\$\$$/g, '').trim();
+  const handleBookmarkClick = (bookmark) => {
+    const cleanProblem = bookmark.problem.replace(/^\$\$|\$\$$/g, '').trim();
     
     navigate('/solutions', { 
       state: { 
-        latex: cleanLatex,
+        latex: cleanProblem,
+        apiResponse: bookmark.solution,
         fromBookmark: true 
       } 
     });
@@ -252,7 +255,7 @@ const getAuthHeaders = () => {
               time={bookmark.time}
               latexContent={`$$${bookmark.latexContent}$$`}
               onDelete={() => handleDelete(bookmark.id)}
-              onClick={() => handleBookmarkClick(bookmark.latexContent)}
+              onClick={() => handleBookmarkClick(bookmark)}
               mathJaxReady={mathJaxReady}
             />
           ))}

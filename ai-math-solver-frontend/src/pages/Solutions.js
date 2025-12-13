@@ -13,9 +13,9 @@ function Solutions({ user }) {
     useEffect(() => {
         if (location.state?.latex && location.state?.fromBookmark) {
             const bookmarkedLatex = location.state.latex;
+            const bookmarkedSolution = location.state.apiResponse;
             setLatex(bookmarkedLatex);
-            
-            fetchSolution(bookmarkedLatex);
+            setApiResponse(bookmarkedSolution);
             
             window.history.replaceState({}, document.title);
             return;
@@ -36,14 +36,14 @@ function Solutions({ user }) {
     const fetchSolution = async (latexInput) => {
         setLoading(true);
         try {
-            const response = await fetch('/gemini', {
+            const response = await fetch('/gemini/process', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 credentials: 'include',
                 body: JSON.stringify({
-                    text: `Solve this mathematical problem step by step: ${latexInput}`
+                    latex: latexInput
                 })
             });
 
