@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import AccessDenied from '../components/AccessDenied/AccessDenied';
 import './AccountsCenter.css';
 
 function AccountsCenter({ user, onLogout }) {
@@ -23,6 +24,10 @@ function AccountsCenter({ user, onLogout }) {
       setLastName(nameParts.slice(1).join(' ') || '');
     }
   }, [user]);
+
+  if (!user) {
+    return <AccessDenied />;
+  }
 
   const handleSaveChanges = async () => {
   if (!user) return;

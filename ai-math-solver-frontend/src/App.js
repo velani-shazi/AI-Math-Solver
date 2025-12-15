@@ -9,6 +9,7 @@ import './App.css';
 import BookmarksPage from "./pages/BookmarksPage";
 import LoginPage from "./pages/LoginPage";
 import AccountsCenter from './pages/AccountsCenter';
+import NotFound from './components/NotFound/NotFound';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -74,6 +75,7 @@ function App() {
             <Route path="/bookmarks" element={<BookmarksPage user={user}/>} />
             <Route path="/login" element={<LoginPage onLogin={handleLogin}/>} />
             <Route path="/account" element={<AccountsCenter user={user} onLogout={handleLogout}/>} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
         <Footer logo={logo} />

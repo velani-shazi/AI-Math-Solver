@@ -4,6 +4,18 @@
   gap: 1rem;
 }
 
+.name-inputs-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .name-inputs-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .submit-button {
   width: 100%;
   padding: 0.5rem;

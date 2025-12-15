@@ -34,18 +34,27 @@ app.use('/users/activity', activityRoutes);
 app.use('/admin', adminRoutes);
 app.use('/gemini',geminiRoutes);
 
-const spaRoutes = ['/', '/login', '/solutions', '/bookmarks', '/account'];
-spaRoutes.forEach(route => {
-  app.get(route, (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'build', 'index.html'));
+// Serve the React app for all GET requests (SPA catch-all)
+// This handles all frontend routes and lets React Router handle 404s
+app.get(/.*/, (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'build', 'index.html'));
+});
+
+// 404 handler for non-GET requests to API routes
+app.use((req, res) => {
+  res.status(404).json({ 
+    message: 'Not Found',
+    path: req.originalUrl,
+    error: 'The requested resource does not exist'
   });
 });
 
+// Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ 
-    message: 'Something went wrong!', 
-    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+  res.status(err.status || 500).json({ 
+    message: err.message || 'Something went wrong!', 
+    error: process.env.NODE_ENV === 'development' ? err.stack : 'Internal server error'
   });
 });
 

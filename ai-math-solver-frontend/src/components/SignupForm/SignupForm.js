@@ -8,7 +8,8 @@ import AlertMessage from '../AlertMessage/AlertMessage';
 import './SignupForm.css';
 
 export default function SignupForm({ onSuccess }) {
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -22,7 +23,7 @@ export default function SignupForm({ onSuccess }) {
     setError('');
     setSuccessMessage('');
 
-    if (!email || !password || !name) {
+    if (!email || !password || !firstName || !lastName) {
       setError('Please fill in all fields');
       return;
     }
@@ -39,7 +40,7 @@ export default function SignupForm({ onSuccess }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ email, password, name }),
+        body: JSON.stringify({ email, password, firstName, lastName, name: `${firstName} ${lastName}` }),
       });
 
       const data = await response.json();
@@ -65,14 +66,25 @@ export default function SignupForm({ onSuccess }) {
       <AlertMessage error={error} success={successMessage} />
       
       <form onSubmit={handleSubmit} className="login-form">
-        <FormInput
-          label="Full Name"
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Your Name"
-          icon={<User size={20} />}
-        />
+        <div className="name-inputs-row">
+          <FormInput
+            label="First Name"
+            type="text"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            placeholder="Emily"
+            icon={<User size={20} />}
+          />
+
+          <FormInput
+            label="Last Name"
+            type="text"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            placeholder="Johnson"
+            icon={<User size={20} />}
+          />
+        </div>
 
         <FormInput
           label="Email Address"

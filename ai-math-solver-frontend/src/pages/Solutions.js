@@ -2,11 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Breadcrumbs from '../components/Breadcrumbs/Breadcrumbs';
 import SolutionContainer from '../components/SolutionContainer/SolutionContainer';
+import AccessDenied from '../components/AccessDenied/AccessDenied';
 
 function Solutions({ user }) {
     const [latex, setLatex] = useState('');
     const [apiResponse, setApiResponse] = useState('');
     const [loading, setLoading] = useState(false);
+    const [accessDenied, setAccessDenied] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -25,13 +27,17 @@ function Solutions({ user }) {
         const storedResponse = sessionStorage.getItem('mathApiResponse');
 
         if (!storedLatex || !storedResponse) {
-            navigate('/');
+            setAccessDenied(true);
             return;
         }
 
         setLatex(storedLatex);
         setApiResponse(storedResponse);
     }, [navigate, location]);
+
+    if (accessDenied) {
+        return <AccessDenied />;
+    }
 
     const fetchSolution = async (latexInput) => {
         setLoading(true);
