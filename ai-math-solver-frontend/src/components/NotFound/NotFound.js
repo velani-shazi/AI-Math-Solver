@@ -7,6 +7,7 @@ export default function NotFound() {
   return (
     <div className="not-found-container">
       <div className="not-found-content">
+        <div className="not-found-spacer"></div>
         <div className="not-found-robot">
           <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
             {/* Robot Head */}

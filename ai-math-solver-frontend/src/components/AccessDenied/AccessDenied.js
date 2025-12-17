@@ -7,6 +7,7 @@ export default function AccessDenied() {
 
   return (
     <div className="access-denied-container">
+      <div className="access-denied-spacer"></div>
       <div className="access-denied-content">
         <div className="access-denied-icon">
           <Lock size={64} />
