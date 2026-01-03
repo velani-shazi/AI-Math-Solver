@@ -28,7 +28,7 @@ const activityLogSchema = new mongoose.Schema({
 const userSchema = new mongoose.Schema({
   ID: { type: String, required: true, unique: true },
   Name: String,
-  Email: { type: String, required: true },
+  Email: { type: String, required: true, unique: true },
   Image_URL: String,
   Registration_Date: { type: Date, default: Date.now },
   Google_Linked: { type: Boolean, default: false },
@@ -39,7 +39,12 @@ const userSchema = new mongoose.Schema({
   isAdmin: { type: Boolean, default: false },
   Activity_Log: [activityLogSchema],
   Last_Login: { type: Date },
-  Last_Active: { type: Date }
+  Last_Active: { type: Date },
+  isEmailVerified: { type: Boolean, default: false },
+  emailVerificationToken: String,
+  emailVerificationExpires: Date,
+  passwordResetToken: String,
+  passwordResetExpires: Date
 });
 
 module.exports = mongoose.model('User', userSchema);

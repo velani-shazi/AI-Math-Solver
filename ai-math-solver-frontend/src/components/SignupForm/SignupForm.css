@@ -45,3 +45,75 @@
 .input-wrapper:not(:has(.input-right-button)) input {
   padding-right: 12px;
 }
+
+.signup-complete-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 2rem;
+  text-align: center;
+  background-color: #fff;
+  border-radius: 0.5rem;
+}
+
+.complete-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #d4edda;
+  color: #28a745;
+}
+
+.complete-icon svg {
+  width: 64px;
+  height: 64px;
+}
+
+.complete-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #28a745;
+  margin: 0;
+}
+
+.complete-message {
+  font-size: 1rem;
+  color: #666;
+  margin: 0;
+}
+
+.complete-instruction {
+  font-size: 0.875rem;
+  color: #999;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.complete-hint {
+  font-size: 0.75rem;
+  color: #999;
+  margin: 0;
+  font-style: italic;
+}
+
+.complete-button {
+  background-color: #db3f59;
+  color: white;
+  border: none;
+  padding: 0.625rem 1.5rem;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-top: 0.5rem;
+}
+
+.complete-button:hover {
+  background-color: #c23550;
+}

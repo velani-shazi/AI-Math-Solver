@@ -1,21 +1,26 @@
 import { useState } from 'react';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import FormInput from '../FormInput/FormInput';
 import AlertMessage from '../AlertMessage/AlertMessage';
 import './LoginForm.css';
 
-export default function LoginForm({ onSuccess, onForgotPassword }) {
+export default function LoginForm({ onSuccess }) {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [emailUnverified, setEmailUnverified] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccessMessage('');
+    setEmailUnverified(false);
 
     if (!email || !password) {
       setError('Please fill in all fields');
@@ -38,6 +43,10 @@ export default function LoginForm({ onSuccess, onForgotPassword }) {
         setSuccessMessage(data.message);
         onSuccess(data.user);
         localStorage.setItem('jwt_token', data.token);
+      } else if (response.status === 403 && data.emailUnverified) {
+        setEmailUnverified(true);
+        setUnverifiedEmail(data.email);
+        setError(data.message || 'Please verify your email before logging in.');
       } else {
         setError(data.message || 'Authentication failed');
       }
@@ -49,9 +58,51 @@ export default function LoginForm({ onSuccess, onForgotPassword }) {
     }
   };
 
+  const handleResendVerification = async () => {
+    try {
+      const response = await fetch('/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: unverifiedEmail || email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccessMessage('Verification email sent! Check your inbox.');
+        setError('');
+      } else {
+        setError(data.message || 'Failed to resend verification email.');
+      }
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+      console.error(err);
+    }
+  };
+
   return (
     <>
       <AlertMessage error={error} success={successMessage} />
+      
+      {emailUnverified && (
+        <div className="email-unverified-banner">
+          <div className="banner-icon">
+            <AlertCircle size={20} />
+          </div>
+          <div className="banner-content">
+            <p className="banner-title">Email Not Verified</p>
+            <p className="banner-message">
+              A verification link has been sent to {unverifiedEmail || email}. Check your email and click the link to verify your account.
+            </p>
+            <button
+              onClick={handleResendVerification}
+              className="banner-button"
+            >
+              Resend Verification Email
+            </button>
+          </div>
+        </div>
+      )}
       
       <form onSubmit={handleSubmit} className="login-form">
         <FormInput
@@ -81,7 +132,7 @@ export default function LoginForm({ onSuccess, onForgotPassword }) {
             href="#"
             onClick={(e) => {
               e.preventDefault();
-              onForgotPassword();
+              navigate('/forgot-password');
             }}
             className="forgot-password-link"
           >

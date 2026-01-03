@@ -81,3 +81,32 @@
 .toggle-auth-button:hover {
   text-decoration: underline;
 }
+
+.forgot-password-navigate-button,
+.back-to-login-button {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  margin-bottom: 0.75rem;
+}
+
+.forgot-password-navigate-button {
+  background-color: #db3f59;
+}
+
+.forgot-password-navigate-button:hover {
+  opacity: 0.9;
+}
+
+.back-to-login-button {
+  background-color: #6b7280;
+}
+
+.back-to-login-button:hover {
+  opacity: 0.9;
+}

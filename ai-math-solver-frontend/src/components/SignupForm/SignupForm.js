@@ -2,7 +2,7 @@
 // components/SignupForm/SignupForm.js
 // ============================================
 import { useState } from 'react';
-import { User, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Lock, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import FormInput from '../FormInput/FormInput';
 import AlertMessage from '../AlertMessage/AlertMessage';
 import './SignupForm.css';
@@ -17,6 +17,7 @@ export default function SignupForm({ onSuccess }) {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [signupComplete, setSignupComplete] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -47,8 +48,8 @@ export default function SignupForm({ onSuccess }) {
 
       if (response.ok) {
         setSuccessMessage(data.message);
-        onSuccess(data.user);
-        localStorage.setItem('jwt_token', data.token);
+        setSignupComplete(true);
+        // Don't auto-login anymore - user must verify email first
         console.log(data)
       } else {
         setError(data.message || 'Authentication failed');
@@ -60,6 +61,32 @@ export default function SignupForm({ onSuccess }) {
       setLoading(false);
     }
   };
+
+  if (signupComplete) {
+    return (
+      <div className="signup-complete-container">
+        <div className="complete-icon">
+          <CheckCircle size={64} />
+        </div>
+        <h2 className="complete-title">Account Created!</h2>
+        <p className="complete-message">
+          A verification email has been sent to <strong>{email}</strong>
+        </p>
+        <p className="complete-instruction">
+          Please check your email and click the verification link to complete your registration. The link expires in 24 hours.
+        </p>
+        <p className="complete-hint">
+          If you don't see the email, check your spam folder.
+        </p>
+        <button
+          onClick={() => window.location.href = '/login'}
+          className="complete-button"
+        >
+          Back to Login
+        </button>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -118,7 +145,7 @@ export default function SignupForm({ onSuccess }) {
         />
 
         <button type="submit" className="submit-button" disabled={loading}>
-          {loading ? 'Please wait...' : 'Create Account'}
+          {loading ? 'Creating Account...' : 'Create Account'}
         </button>
       </form>
     </>

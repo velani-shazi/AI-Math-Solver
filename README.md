@@ -43,10 +43,45 @@ GOOGLE_CALLBACK_URL=http://localhost:3000/auth/google/callback
 FRONTEND_URL=http://localhost:3000
 GEMINI_API_KEY=your-gemini-api-key
 NODE_ENV=development
+
+# Email (Nodemailer) - required for verification / reset emails
+EMAIL_SERVICE=gmail                       # optional, defaults to 'gmail'
+EMAIL_USER=your-email@example.com         # SMTP user / email address
+EMAIL_PASSWORD=your-email-password        # SMTP password or app password
+EMAIL_FROM="AI Math Solver <no-reply@example.com>"  # optional, defaults to EMAIL_USER
 ```
 
-> ⚠️ Use your own API keys and secrets.
+> ⚠️ Use your own API keys, SMTP credentials, and secrets.
 > Never commit environment variables to version control.
+
+## ✉️ Email & Auth (Verification and Password Reset)
+
+- **What changed:** The app now sends emails for email verification (manual signup), resending verification links, password reset (forgot/reset), and welcome emails for new Google OAuth users.
+
+- **Endpoints (POST):**
+  - `/auth/signup` — create account (verification email sent on manual signup)
+  - `/auth/verify-email` — body: `{ token }` to verify account
+  - `/auth/resend-verification` — body: `{ email }` to resend verification link
+  - `/auth/forgot-password` — body: `{ email }` to request a password reset link
+  - `/auth/reset-password` — body: `{ token, newPassword }` to reset password
+
+- **Notes:**
+  - Verification tokens expire in **24 hours**; password reset tokens expire in **1 hour**.
+  - Manual signups require email verification before login; Google signups are auto-verified and receive a welcome email.
+  - The frontend now shows UIs for unverified accounts (resend verification) and a post-signup "Account Created" screen.
+
+- **Quick examples:**
+  - Verify email:
+
+    ```bash
+    curl -X POST -H "Content-Type: application/json" -d '{"token":"<token>"}' http://localhost:5000/auth/verify-email
+    ```
+
+  - Request password reset:
+
+    ```bash
+    curl -X POST -H "Content-Type: application/json" -d '{"email":"you@example.com"}' http://localhost:5000/auth/forgot-password
+    ```
 
 ---
 

@@ -1,6 +1,7 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const User = require('../models/User');
+const { sendWelcomeEmail } = require('../services/email.service');
 
 passport.use(
   new GoogleStrategy(
@@ -11,9 +12,13 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        let user = await User.findOne({ ID: profile.id });
+        // First check by email to prevent duplicate accounts
+        const email = profile.emails[0].value;
+        let user = await User.findOne({ $or: [{ ID: profile.id }, { Email: email }] });
+        let isNewUser = false;
 
         if (!user) {
+          isNewUser = true;
           user = new User({
             ID: profile.id,
             Name: profile.displayName,
@@ -25,10 +30,20 @@ passport.use(
             History: [],
             Library: [],
             isAdmin: false,
+            isEmailVerified: true,
           });
 
           await user.save();
           console.log('New user created:', user.Email);
+
+          // Send welcome email for new Google users
+          try {
+            await sendWelcomeEmail(email, profile.displayName);
+            console.log('Welcome email sent to:', email);
+          } catch (emailError) {
+            console.error('Failed to send welcome email to new Google user:', emailError);
+            // Continue even if email fails
+          }
         } else {
           user.Google_Linked = true;
           await user.save();

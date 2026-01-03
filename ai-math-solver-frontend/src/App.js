@@ -10,6 +10,9 @@ import BookmarksPage from "./pages/BookmarksPage";
 import LoginPage from "./pages/LoginPage";
 import AccountsCenter from './pages/AccountsCenter';
 import NotFound from './components/NotFound/NotFound';
+import VerifyEmailPage from "./pages/VerifyEmailPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -38,7 +41,7 @@ function App() {
 
         if (res.ok) {
           const data = await res.json();
-          if (data.authenticated) {
+          if (data.authenticated && data.user) {
             console.log(data.user);
             setUser(data.user);
           }
@@ -75,6 +78,9 @@ function App() {
             <Route path="/bookmarks" element={<BookmarksPage user={user}/>} />
             <Route path="/login" element={<LoginPage onLogin={handleLogin}/>} />
             <Route path="/account" element={<AccountsCenter user={user} onLogout={handleLogout}/>} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
