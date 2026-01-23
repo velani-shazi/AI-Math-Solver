@@ -1,60 +1,86 @@
-import React, { useEffect, useRef, useState } from 'react';
+/**
+ * Calculator Component
+ * 
+ * Main math equation editor and solver interface
+ * Provides:
+ * - MathQuill editor for LaTeX expression input
+ * - Tabbed toolbar with math symbols (Basic, Greek, Trig, Operators, Accents, etc.)
+ * - Submit button to send expression to AI solver
+ * - Real-time LaTeX input from buttons
+ * 
+ * Features:
+ * - Tab-based symbol organization
+ * - Keyboard support (Enter to solve)
+ * - Loading state with spinner
+ * - Cursor navigation controls
+ * - Integration with global solution state
+ */
+
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useMathQuill } from '../../hooks/useMathQuill';
+import { processMath, storeSolution } from '../../services/mathService';
+import { useSolution } from '../../hooks/useSolution';
 import './Calculator.css';
 
+/**
+ * Calculator Component
+ * Renders MathQuill editor with math symbol toolbar
+ */
 function Calculator() {
   const navigate = useNavigate();
-  const mathFieldRef = useRef(null);
+  // Currently active symbol tab
   const [activeTab, setActiveTab] = useState('Common');
+  // Loading state while processing math expression
   const [loading, setLoading] = useState(false);
+  // Global solution context for saving results
+  const solutionContext = useSolution();
 
-  useEffect(() => {
-    const jqueryScript = document.createElement('script');
-    jqueryScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js';
-    document.head.appendChild(jqueryScript);
+  // Use the MathQuill hook to get editor control methods
+  const { 
+    mathFieldRef, 
+    getLatex, 
+    clear, 
+    focus,
+    moveCursor,
+    writeSymbol 
+  } = useMathQuill();
 
-    jqueryScript.onload = () => {
-      const mathquillScript = document.createElement('script');
-      mathquillScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.js';
-      document.head.appendChild(mathquillScript);
-
-      mathquillScript.onload = () => {
-        initializeMathQuill();
-      };
-    };
-
-    const mathquillCSS = document.createElement('link');
-    mathquillCSS.rel = 'stylesheet';
-    mathquillCSS.href = 'https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.css';
-    document.head.appendChild(mathquillCSS);
-
-    return () => {
-    };
-  }, []);
-
-  const initializeMathQuill = () => {
-    if (window.MathQuill) {
+  /**
+   * Initialize MathQuill editor with Enter key handler
+   * Allows users to press Enter to solve the expression
+   */
+  React.useEffect(() => {
+    if (mathFieldRef.current && window.MathQuill) {
       const MQ = window.MathQuill.getInterface(2);
       mathFieldRef.current = MQ.MathField(document.getElementById('mathEditor'), {
         spaceBehavesLikeTab: true,
         leftRightIntoCmdGoes: 'up',
         restrictMismatchedBrackets: true,
         handlers: {
-          enter: handleEnter
+          enter: handleEnter // Enter key triggers solve
         }
       });
       mathFieldRef.current.focus();
     }
+  }, []);
+
+  /**
+   * Handle Enter key press - solve the expression
+   * Gets LaTeX from editor and processes it
+   */
+  const handleEnter = async () => {
+    const latex = getLatex();
+    await handleEnterKey(latex);
   };
 
-  const handleEnter = () => {
-    if (mathFieldRef.current) {
-      const latex = mathFieldRef.current.latex();
-      handleEnterKey(latex);
-    }
-  };
-
+  /**
+   * Process mathematical expression through AI solver
+   * Stores result and navigates to solutions page
+   * @param {string} latex - LaTeX expression to process
+   */
   const handleEnterKey = async (latex) => {
+    // Validate expression not empty
     if (!latex || latex.trim() === '') {
       alert('Please enter a mathematical expression first!');
       return;
@@ -63,75 +89,49 @@ function Calculator() {
     setLoading(true);
 
     try {
-      const response = await sendLatexToAPI(latex);
+      // Send expression to backend for processing
+      const result = await processMath(latex);
 
-      sessionStorage.setItem('mathApiResponse', response.candidates[0].content.parts[0].text);
-      sessionStorage.setItem('originalLatex', latex);
-      sessionStorage.setItem('Latex', latex);
-
-      console.log(response.candidates[0].content.parts[0].text);
-      navigate('/solutions')
+      if (result.success) {
+        // Store in session storage and context
+        storeSolution(latex, result.solution);
+        solutionContext.saveSolution(latex, result.solution);
+        // Navigate to solutions page
+        navigate('/solutions');
+      } else {
+        alert(result.error || 'Error processing your expression. Please try again.');
+      }
     } catch (error) {
-      console.error('Error sending to API:', error);
+      console.error('Error processing math:', error);
       alert('Error processing your request. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const sendLatexToAPI = async (latex) => {
-  console.log("Sending LaTeX to API:", latex);
-  
-  
-  const response = await fetch("/gemini/process", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ latex }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-
-  const data = await response.json();
-  return data;
-};
-
-  const handleButtonClick = (command, symbol) => {
-    if (mathFieldRef.current) {
-      if (command === 'write') {
-        mathFieldRef.current.write(symbol);
-      } else if (command === 'cmd') {
-        mathFieldRef.current.write(symbol);
-      }
-      mathFieldRef.current.focus();
-    }
+  /**
+   * Insert symbol at cursor position in editor
+   * @param {string} symbol - Mathematical symbol to insert
+   */
+  const handleButtonClick = (symbol) => {
+    writeSymbol(symbol);
   };
 
-  const clearEditor = () => {
-    if (mathFieldRef.current) {
-      mathFieldRef.current.latex('');
-      mathFieldRef.current.focus();
-    }
-  };
-
+  /**
+   * Move cursor left in editor
+   */
   const handleLeftClick = () => {
-  if (mathFieldRef.current) {
-    mathFieldRef.current.keystroke('Left'); 
-    mathFieldRef.current.focus();
-  }
-};
+    moveCursor('left');
+  };
 
-const handleRightClick = () => {
-  if (mathFieldRef.current) {
-    mathFieldRef.current.keystroke('Right');
-    mathFieldRef.current.focus();
-  }
-};
+  /**
+   * Move cursor right in editor
+   */
+  const handleRightClick = () => {
+    moveCursor('right');
+  };
 
-
+  // Define symbol tabs and their labels
   const tabs = [
     { id: 'Common', label: 'Basic' },
     { id: 'Greeksm', label: 'αβγ' },
@@ -143,10 +143,14 @@ const handleRightClick = () => {
     { id: 'Suggestions', label: 'Suggestion' }
   ];
 
-  const Button = ({ command, symbol, children, title }) => (
+  /**
+   * Reusable button component for math symbols
+   * Inserts symbol when clicked
+   */
+  const Button = ({ symbol, children, title }) => (
     <div 
       className="calc-button math-button" 
-      onClick={() => handleButtonClick(command, symbol)}
+      onClick={() => handleButtonClick(symbol)}
       title={title}
     >
       {children}
@@ -206,32 +210,32 @@ const handleRightClick = () => {
       <div className="calculator-buttons">
         <div id="Common" className={`button-panel ${activeTab !== 'Common' ? 'hide' : ''}`}>
           <div className="button-grid">
-            <Button command="write" symbol="^2" title="Square">
+            <Button symbol="^2" title="Square">
               <span className="math-display">☐²</span>
             </Button>
-            <Button command="cmd" symbol="^{}" title="Exponent">
+            <Button symbol="^{}" title="Exponent">
               <span className="math-display">x<span className="sup">☐</span></span>
             </Button>
-            <Button command="cmd" symbol="\sqrt{}" title="Square Root">
+            <Button symbol="\sqrt{}" title="Square Root">
               <span className="math-display">√☐</span>
             </Button>
-            <Button command="cmd" symbol="\sqrt[{}]{}" title="Nth Root">
+            <Button symbol="\sqrt[{}]{}" title="Nth Root">
               <span className="math-display"><span className="sup">☐</span>√☐</span>
             </Button>
-            <Button command="cmd" symbol="\frac{}{}" title="Fraction">
+            <Button symbol="\frac{}{}" title="Fraction">
               <div className="fraction math-display">
                 <div className="numerator">☐</div>
                 <div className="denominator">☐</div>
               </div>
             </Button>
-            <Button command="cmd" symbol="\log_{}{}\left( {} \right)" title="Logarithm">
+            <Button symbol="\log_{}{}\left( {} \right)" title="Logarithm">
               <span className="math-display">log<sub>☐</sub></span>
             </Button>
-            <Button command="write" symbol="\pi" title="Pi">π</Button>
-            <Button command="write" symbol="\theta" title="Theta">θ</Button>
-            <Button command="write" symbol="\infty" title="Infinity">∞</Button>
-            <Button command="cmd" symbol="\int_{}^{}\left( {} \right)" title="Integral">∫</Button>
-            <Button command="write" symbol="\frac{d}{dx}\left( {} \right)" title="Derivative">
+            <Button symbol="\pi" title="Pi">π</Button>
+            <Button symbol="\theta" title="Theta">θ</Button>
+            <Button symbol="\infty" title="Infinity">∞</Button>
+            <Button symbol="\int_{}^{}\left( {} \right)" title="Integral">∫</Button>
+            <Button symbol="\frac{d}{dx}\left( {} \right)" title="Derivative">
               <div className="fraction math-display">
                 <div className="numerator">d</div>
                 <div className="denominator">dx</div>
@@ -239,36 +243,36 @@ const handleRightClick = () => {
             </Button>
           </div>
           <div className="button-grid">
-            <Button command="write" symbol="\geq" title="Greater Than or Equal">≥</Button>
-            <Button command="write" symbol="\leq" title="Less Than or Equal">≤</Button>
-            <Button command="write" symbol="\cdot" title="Dot Product">·</Button>
-            <Button command="write" symbol="\div" title="Division">÷</Button>
-            <Button command="write" symbol="^{\circ}" title="Degree">x°</Button>
-            <Button command="write" symbol="\left( {} \right)" title="Left Parenthesis">( )</Button>
+            <Button symbol="\geq" title="Greater Than or Equal">≥</Button>
+            <Button symbol="\leq" title="Less Than or Equal">≤</Button>
+            <Button symbol="\cdot" title="Dot Product">·</Button>
+            <Button symbol="\div" title="Division">÷</Button>
+            <Button symbol="^{\circ}" title="Degree">x°</Button>
+            <Button symbol="\left( {} \right)" title="Left Parenthesis">( )</Button>
             
-            <Button command="write" symbol="\left| {} \right|" title="Absolute Value">| |</Button>
-            <Button command="write" symbol="\circ" title="Composition">(f ∘ g)</Button>
-            <Button command="write" symbol="f(x)" title="Function">f(x)</Button>
-            <Button command="write" symbol="\ln\left( {} \right)" title="Natural Log">ln</Button>
-            <Button command="write" symbol="e^{ }" title="Exponential">
+            <Button symbol="\left| {} \right|" title="Absolute Value">| |</Button>
+            <Button symbol="\circ" title="Composition">(f ∘ g)</Button>
+            <Button symbol="f(x)" title="Function">f(x)</Button>
+            <Button symbol="\ln\left( {} \right)" title="Natural Log">ln</Button>
+            <Button symbol="e^{ }" title="Exponential">
               <span className="math-display">e<span className="sup">☐</span></span>
             </Button>
           </div>
           <div className="button-grid">
-            <Button command="write" symbol="\sin\left( {} \right)" title="Sine">sin</Button>
-            <Button command="write" symbol="\cos\left( {} \right)" title="Cosine">cos</Button>
-            <Button command="write" symbol="\tan\left( {} \right)" title="Tangent">tan</Button>
-            <Button command="write" symbol="\cot\left( {} \right)" title="Cotangent">cot</Button>
-            <Button command="write" symbol="\csc\left( {} \right)" title="Cosecant">csc</Button>
-            <Button command="write" symbol="\sec\left( {} \right)" title="Secant">sec</Button>
-            <Button command="cmd" symbol="\sum_{}^{}" title="Summation">∑</Button>
-            <Button command="write" symbol="\prod" title="Product">∏</Button>
-            <Button command="write" symbol="\lim _{x\to }\left(\right)" title="Limit">lim</Button>
-            <Button command="write" symbol="\frac{\partial}{\partial x}\left( {} \right)" title="Partial Derivative">∂/∂x</Button>
-            <Button command="write" symbol="!" title="Factorial">!</Button>
+            <Button symbol="\sin\left( {} \right)" title="Sine">sin</Button>
+            <Button symbol="\cos\left( {} \right)" title="Cosine">cos</Button>
+            <Button symbol="\tan\left( {} \right)" title="Tangent">tan</Button>
+            <Button symbol="\cot\left( {} \right)" title="Cotangent">cot</Button>
+            <Button symbol="\csc\left( {} \right)" title="Cosecant">csc</Button>
+            <Button symbol="\sec\left( {} \right)" title="Secant">sec</Button>
+            <Button symbol="\sum_{}^{}" title="Summation">∑</Button>
+            <Button symbol="\prod" title="Product">∏</Button>
+            <Button symbol="\lim _{x\to }\left(\right)" title="Limit">lim</Button>
+            <Button symbol="\frac{\partial}{\partial x}\left( {} \right)" title="Partial Derivative">∂/∂x</Button>
+            <Button symbol="!" title="Factorial">!</Button>
           </div>
           <div className="button-grid">
-            <Button command="write" symbol="^'" title="Prime">
+            <Button symbol="^'" title="Prime">
               <span className="math-display">☐'</span>
             </Button>
           </div>
@@ -276,191 +280,191 @@ const handleRightClick = () => {
 
         <div id="Greeksm" className={`button-panel ${activeTab !== 'Greeksm' ? 'hide' : ''}`}>
           <div className="button-grid">
-            <Button command="write" symbol="\alpha" title="Alpha">α</Button>
-            <Button command="write" symbol="\beta" title="Beta">β</Button>
-            <Button command="write" symbol="\gamma" title="Gamma">γ</Button>
-            <Button command="write" symbol="\delta" title="Delta">δ</Button>
-            <Button command="write" symbol="\epsilon" title="Epsilon">ε</Button>
-            <Button command="write" symbol="\zeta" title="Zeta">ζ</Button>
-            <Button command="write" symbol="\eta" title="Eta">η</Button>
-            <Button command="write" symbol="\theta" title="Theta">θ</Button>
-            <Button command="write" symbol="\iota" title="Iota">ι</Button>
-            <Button command="write" symbol="\kappa" title="Kappa">κ</Button>
-            <Button command="write" symbol="\lambda" title="Lambda">λ</Button>
+            <Button symbol="\alpha" title="Alpha">α</Button>
+            <Button symbol="\beta" title="Beta">β</Button>
+            <Button symbol="\gamma" title="Gamma">γ</Button>
+            <Button symbol="\delta" title="Delta">δ</Button>
+            <Button symbol="\epsilon" title="Epsilon">ε</Button>
+            <Button symbol="\zeta" title="Zeta">ζ</Button>
+            <Button symbol="\eta" title="Eta">η</Button>
+            <Button symbol="\theta" title="Theta">θ</Button>
+            <Button symbol="\iota" title="Iota">ι</Button>
+            <Button symbol="\kappa" title="Kappa">κ</Button>
+            <Button symbol="\lambda" title="Lambda">λ</Button>
           </div>
           <div className="button-grid">
-            <Button command="write" symbol="\mu" title="Mu">μ</Button>
-            <Button command="write" symbol="\nu" title="Nu">ν</Button>
-            <Button command="write" symbol="\xi" title="Xi">ξ</Button>
-            <Button command="write" symbol="\pi" title="Pi">π</Button>
-            <Button command="write" symbol="\rho" title="Rho">ρ</Button>
-            <Button command="write" symbol="\sigma" title="Sigma">σ</Button>
-            <Button command="write" symbol="\tau" title="Tau">τ</Button>
-            <Button command="write" symbol="\upsilon" title="Upsilon">υ</Button>
-            <Button command="write" symbol="\phi" title="Phi">φ</Button>
-            <Button command="write" symbol="\chi" title="Chi">χ</Button>
-            <Button command="write" symbol="\psi" title="Psi">ψ</Button>
+            <Button symbol="\mu" title="Mu">μ</Button>
+            <Button symbol="\nu" title="Nu">ν</Button>
+            <Button symbol="\xi" title="Xi">ξ</Button>
+            <Button symbol="\pi" title="Pi">π</Button>
+            <Button symbol="\rho" title="Rho">ρ</Button>
+            <Button symbol="\sigma" title="Sigma">σ</Button>
+            <Button symbol="\tau" title="Tau">τ</Button>
+            <Button symbol="\upsilon" title="Upsilon">υ</Button>
+            <Button symbol="\phi" title="Phi">φ</Button>
+            <Button symbol="\chi" title="Chi">χ</Button>
+            <Button symbol="\psi" title="Psi">ψ</Button>
           </div>
           <div className="button-grid">
-            <Button command="write" symbol="\omega" title="Omega">ω</Button>
+            <Button symbol="\omega" title="Omega">ω</Button>
           </div>
         </div>
 
         <div id="Greeklg" className={`button-panel ${activeTab !== 'Greeklg' ? 'hide' : ''}`}>
           <div className="button-grid">
-            <Button command="write" symbol="A" title="Capital Alpha">Α</Button>
-            <Button command="write" symbol="B" title="Capital Beta">Β</Button>
-            <Button command="write" symbol="\Gamma" title="Capital Gamma">Γ</Button>
-            <Button command="write" symbol="\Delta" title="Capital Delta">Δ</Button>
-            <Button command="write" symbol="E" title="Capital Epsilon">Ε</Button>
-            <Button command="write" symbol="Z" title="Capital Zeta">Ζ</Button>
-            <Button command="write" symbol="H" title="Capital Eta">Η</Button>
-            <Button command="write" symbol="\Theta" title="Capital Theta">Θ</Button>
-            <Button command="write" symbol="I" title="Capital Iota">Ι</Button>
-            <Button command="write" symbol="K" title="Capital Kappa">Κ</Button>
-            <Button command="write" symbol="\Lambda" title="Capital Lambda">Λ</Button>
+            <Button symbol="A" title="Capital Alpha">Α</Button>
+            <Button symbol="B" title="Capital Beta">Β</Button>
+            <Button symbol="\Gamma" title="Capital Gamma">Γ</Button>
+            <Button symbol="\Delta" title="Capital Delta">Δ</Button>
+            <Button symbol="E" title="Capital Epsilon">Ε</Button>
+            <Button symbol="Z" title="Capital Zeta">Ζ</Button>
+            <Button symbol="H" title="Capital Eta">Η</Button>
+            <Button symbol="\Theta" title="Capital Theta">Θ</Button>
+            <Button symbol="I" title="Capital Iota">Ι</Button>
+            <Button symbol="K" title="Capital Kappa">Κ</Button>
+            <Button symbol="\Lambda" title="Capital Lambda">Λ</Button>
           </div>
           <div className="button-grid">
-            <Button command="write" symbol="M" title="Capital Mu">Μ</Button>
-            <Button command="write" symbol="N" title="Capital Nu">Ν</Button>
-            <Button command="write" symbol="\Xi" title="Capital Xi">Ξ</Button>
-            <Button command="write" symbol="O" title="Capital Omicron">Ο</Button>
-            <Button command="write" symbol="\Pi" title="Capital Pi">Π</Button>
-            <Button command="write" symbol="P" title="Capital Rho">Ρ</Button>
-            <Button command="write" symbol="\Sigma" title="Capital Sigma">Σ</Button>
-            <Button command="write" symbol="T" title="Capital Tau">Τ</Button>
-            <Button command="write" symbol="Y" title="Capital Upsilon">Υ</Button>
-            <Button command="write" symbol="\Phi" title="Capital Phi">Φ</Button>
-            <Button command="write" symbol="X" title="Capital Chi">Χ</Button>
+            <Button symbol="M" title="Capital Mu">Μ</Button>
+            <Button symbol="N" title="Capital Nu">Ν</Button>
+            <Button symbol="\Xi" title="Capital Xi">Ξ</Button>
+            <Button symbol="O" title="Capital Omicron">Ο</Button>
+            <Button symbol="\Pi" title="Capital Pi">Π</Button>
+            <Button symbol="P" title="Capital Rho">Ρ</Button>
+            <Button symbol="\Sigma" title="Capital Sigma">Σ</Button>
+            <Button symbol="T" title="Capital Tau">Τ</Button>
+            <Button symbol="Y" title="Capital Upsilon">Υ</Button>
+            <Button symbol="\Phi" title="Capital Phi">Φ</Button>
+            <Button symbol="X" title="Capital Chi">Χ</Button>
           </div>
           <div className="button-grid">
-            <Button command="write" symbol="\Psi" title="Capital Psi">Ψ</Button>
-            <Button command="write" symbol="\Omega" title="Capital Omega">Ω</Button>
+            <Button symbol="\Psi" title="Capital Psi">Ψ</Button>
+            <Button symbol="\Omega" title="Capital Omega">Ω</Button>
           </div>
         </div>
 
         <div id="Trigo" className={`button-panel ${activeTab !== 'Trigo' ? 'hide' : ''}`}>
           <div className="button-grid">
-            <Button command="write" symbol="\sin\left( {} \right)" title="Sine">sin</Button>
-            <Button command="write" symbol="\cos\left( {} \right)" title="Cosine">cos</Button>
-            <Button command="write" symbol="\tan\left( {} \right)" title="Tangent">tan</Button>
-            <Button command="write" symbol="\cot\left( {} \right)" title="Cotangent">cot</Button>
-            <Button command="write" symbol="\sec\left( {} \right)" title="Secant">sec</Button>
-            <Button command="write" symbol="\csc\left( {} \right)" title="Cosecant">csc</Button>
-            <Button command="write" symbol="\sinh\left( {} \right)" title="Hyperbolic Sine">sinh</Button>
-            <Button command="write" symbol="\cosh\left( {} \right)" title="Hyperbolic Cosine">cosh</Button>
-            <Button command="write" symbol="\tanh\left( {} \right)" title="Hyperbolic Tangent">tanh</Button>
-            <Button command="write" symbol="\coth\left( {} \right)" title="Hyperbolic Cotangent">coth</Button>
-            <Button command="write" symbol="\operatorname{sech}\left( {} \right)" title="Hyperbolic Secant">sech</Button>
+            <Button symbol="\sin\left( {} \right)" title="Sine">sin</Button>
+            <Button symbol="\cos\left( {} \right)" title="Cosine">cos</Button>
+            <Button symbol="\tan\left( {} \right)" title="Tangent">tan</Button>
+            <Button symbol="\cot\left( {} \right)" title="Cotangent">cot</Button>
+            <Button symbol="\sec\left( {} \right)" title="Secant">sec</Button>
+            <Button symbol="\csc\left( {} \right)" title="Cosecant">csc</Button>
+            <Button symbol="\sinh\left( {} \right)" title="Hyperbolic Sine">sinh</Button>
+            <Button symbol="\cosh\left( {} \right)" title="Hyperbolic Cosine">cosh</Button>
+            <Button symbol="\tanh\left( {} \right)" title="Hyperbolic Tangent">tanh</Button>
+            <Button symbol="\coth\left( {} \right)" title="Hyperbolic Cotangent">coth</Button>
+            <Button symbol="\operatorname{sech}\left( {} \right)" title="Hyperbolic Secant">sech</Button>
           </div>
           <div className="button-grid">
-            <Button command="write" symbol="\sin^{-1}\left( {} \right)" title="Arcsine">arcsin</Button>
-            <Button command="write" symbol="\cos^{-1}\left( {} \right)" title="Arccosine">arccos</Button>
-            <Button command="write" symbol="\tan^{-1}\left( {} \right)" title="Arctangent">arctan</Button>
-            <Button command="write" symbol="\cot^{-1}\left( {} \right)" title="Arccotangent">arccot</Button>
-            <Button command="write" symbol="\sec^{-1}\left( {} \right)" title="Arcsecant">arcsec</Button>
-            <Button command="write" symbol="\csc^{-1}\left( {} \right)" title="Arccosecant">arccsc</Button>
-            <Button command="write" symbol="\sinh^{-1}\left( {} \right)" title="Inverse Hyperbolic Sine">arcsinh</Button>
-            <Button command="write" symbol="\cosh^{-1}\left( {} \right)" title="Inverse Hyperbolic Cosine">arccosh</Button>
-            <Button command="write" symbol="\tanh^{-1}\left( {} \right)" title="Inverse Hyperbolic Tangent">arctanh</Button>
-            <Button command="write" symbol="\coth^{-1}\left( {} \right)" title="Inverse Hyperbolic Cotangent">arccoth</Button>
-            <Button command="write" symbol="\operatorname{sech}^{-1}\left( {} \right)" title="Inverse Hyperbolic Secant">arcsech</Button>
+            <Button symbol="\sin^{-1}\left( {} \right)" title="Arcsine">arcsin</Button>
+            <Button symbol="\cos^{-1}\left( {} \right)" title="Arccosine">arccos</Button>
+            <Button symbol="\tan^{-1}\left( {} \right)" title="Arctangent">arctan</Button>
+            <Button symbol="\cot^{-1}\left( {} \right)" title="Arccotangent">arccot</Button>
+            <Button symbol="\sec^{-1}\left( {} \right)" title="Arcsecant">arcsec</Button>
+            <Button symbol="\csc^{-1}\left( {} \right)" title="Arccosecant">arccsc</Button>
+            <Button symbol="\sinh^{-1}\left( {} \right)" title="Inverse Hyperbolic Sine">arcsinh</Button>
+            <Button symbol="\cosh^{-1}\left( {} \right)" title="Inverse Hyperbolic Cosine">arccosh</Button>
+            <Button symbol="\tanh^{-1}\left( {} \right)" title="Inverse Hyperbolic Tangent">arctanh</Button>
+            <Button symbol="\coth^{-1}\left( {} \right)" title="Inverse Hyperbolic Cotangent">arccoth</Button>
+            <Button symbol="\operatorname{sech}^{-1}\left( {} \right)" title="Inverse Hyperbolic Secant">arcsech</Button>
           </div>
         </div>
 
         <div id="Operators" className={`button-panel ${activeTab !== 'Operators' ? 'hide' : ''}`}>
           <div className="button-grid">
-            <Button command="write" symbol="=" title="Equal">=</Button>
-            <Button command="write" symbol="\neq" title="Not Equal">≠</Button>
-            <Button command="write" symbol="<" title="Less Than">&lt;</Button>
-            <Button command="write" symbol=">" title="Greater Than">&gt;</Button>
-            <Button command="write" symbol="\leq" title="Less Than or Equal">≤</Button>
-            <Button command="write" symbol="\geq" title="Greater Than or Equal">≥</Button>
-            <Button command="write" symbol="\div" title="Division">÷</Button>
-            <Button command="write" symbol="\times" title="Multiplication">×</Button>
-            <Button command="write" symbol="\cdot" title="Dot Product">·</Button>
-            <Button command="write" symbol="\to" title="Right Arrow">→</Button>
-            <Button command="write" symbol="!" title="Factorial">!</Button>
+            <Button symbol="=" title="Equal">=</Button>
+            <Button symbol="\neq" title="Not Equal">≠</Button>
+            <Button symbol="<" title="Less Than">&lt;</Button>
+            <Button symbol=">" title="Greater Than">&gt;</Button>
+            <Button symbol="\leq" title="Less Than or Equal">≤</Button>
+            <Button symbol="\geq" title="Greater Than or Equal">≥</Button>
+            <Button symbol="\div" title="Division">÷</Button>
+            <Button symbol="\times" title="Multiplication">×</Button>
+            <Button symbol="\cdot" title="Dot Product">·</Button>
+            <Button symbol="\to" title="Right Arrow">→</Button>
+            <Button symbol="!" title="Factorial">!</Button>
           </div>
           <div className="button-grid">
-            <Button command="write" symbol="\left( {} \right)" title="Left Parenthesis">( )</Button>
-            <Button command="write" symbol="\left[ {} \right]" title="Left Bracket">[ ]</Button>
-            <Button command="write" symbol="\left| {} \right|" title="Absolute Value">| |</Button>
-            <Button command="write" symbol="\lfloor \rfloor" title="Floor">⌊⌋</Button>
-            <Button command="write" symbol="\lceil \rceil" title="Ceiling">⌈⌉</Button>
-            <Button command="write" symbol="\left\{\right\}" title="Left Brace">&#123; &#125;</Button>
-            <Button command="write" symbol="^{\circ}" title="Degree">°</Button>
-            <Button command="write" symbol="+" title="Addition">+</Button>
-            <Button command="write" symbol="-" title="Subtraction">-</Button>
-            <Button command="write" symbol="\pm" title="Plus Minus">±</Button>
-            <Button command="write" symbol="\mp" title="Minus Plus">∓</Button>
+            <Button symbol="\left( {} \right)" title="Left Parenthesis">( )</Button>
+            <Button symbol="\left[ {} \right]" title="Left Bracket">[ ]</Button>
+            <Button symbol="\left| {} \right|" title="Absolute Value">| |</Button>
+            <Button symbol="\lfloor \rfloor" title="Floor">⌊⌋</Button>
+            <Button symbol="\lceil \rceil" title="Ceiling">⌈⌉</Button>
+            <Button symbol="\left\{\right\}" title="Left Brace">&#123; &#125;</Button>
+            <Button symbol="^{\circ}" title="Degree">°</Button>
+            <Button symbol="+" title="Addition">+</Button>
+            <Button symbol="-" title="Subtraction">-</Button>
+            <Button symbol="\pm" title="Plus Minus">±</Button>
+            <Button symbol="\mp" title="Minus Plus">∓</Button>
           </div>
         </div>
 
         <div id="Accents" className={`button-panel ${activeTab !== 'Accents' ? 'hide' : ''}`}>
           <div className="button-grid">
-            <Button command="write" symbol="\in" title="Element of">∈</Button>
-            <Button command="write" symbol="\notin" title="Not element of">∉</Button>
-            <Button command="write" symbol="\forall" title="For All">∀</Button>
-            <Button command="write" symbol="\exists" title="There Exists">∃</Button>
-            <Button command="write" symbol="\mathbb{R}" title="Real Numbers">ℝ</Button>
-            <Button command="write" symbol="\mathbb{C}" title="Complex Numbers">ℂ</Button>
-            <Button command="write" symbol="\mathbb{N}" title="Natural Numbers">ℕ</Button>
-            <Button command="write" symbol="\mathbb{Z}" title="Integers">ℤ</Button>
-            <Button command="write" symbol="\emptyset" title="Empty Set">∅</Button>
-            <Button command="write" symbol="\infty" title="Infinity">∞</Button>
-            <Button command="cmd" symbol="\overline{}" title="Overline">x̄</Button>
+            <Button symbol="\in" title="Element of">∈</Button>
+            <Button symbol="\notin" title="Not element of">∉</Button>
+            <Button symbol="\forall" title="For All">∀</Button>
+            <Button symbol="\exists" title="There Exists">∃</Button>
+            <Button symbol="\mathbb{R}" title="Real Numbers">ℝ</Button>
+            <Button symbol="\mathbb{C}" title="Complex Numbers">ℂ</Button>
+            <Button symbol="\mathbb{N}" title="Natural Numbers">ℕ</Button>
+            <Button symbol="\mathbb{Z}" title="Integers">ℤ</Button>
+            <Button symbol="\emptyset" title="Empty Set">∅</Button>
+            <Button symbol="\infty" title="Infinity">∞</Button>
+            <Button symbol="\overline{}" title="Overline">x̄</Button>
           </div>
           <div className="button-grid">
-            <Button command="write" symbol="\cup" title="Union">∪</Button>
-            <Button command="write" symbol="\cap" title="Intersection">∩</Button>
-            <Button command="write" symbol="\subset" title="Subset">⊂</Button>
-            <Button command="write" symbol="\supset" title="Superset">⊃</Button>
-            <Button command="write" symbol="\subseteq" title="Subset or Equal">⊆</Button>
-            <Button command="write" symbol="\supseteq" title="Superset or Equal">⊇</Button>
-            <Button command="write" symbol="\vee" title="Logical Or">∨</Button>
-            <Button command="write" symbol="\wedge" title="Logical And">∧</Button>
-            <Button command="write" symbol="\neg" title="Negation">¬</Button>
-            <Button command="write" symbol="\oplus" title="Direct Sum">⊕</Button>
-            <Button command="write" symbol="^c" title="Complement">xᶜ</Button>
+            <Button symbol="\cup" title="Union">∪</Button>
+            <Button symbol="\cap" title="Intersection">∩</Button>
+            <Button symbol="\subset" title="Subset">⊂</Button>
+            <Button symbol="\supset" title="Superset">⊃</Button>
+            <Button symbol="\subseteq" title="Subset or Equal">⊆</Button>
+            <Button symbol="\supseteq" title="Superset or Equal">⊇</Button>
+            <Button symbol="\vee" title="Logical Or">∨</Button>
+            <Button symbol="\wedge" title="Logical And">∧</Button>
+            <Button symbol="\neg" title="Negation">¬</Button>
+            <Button symbol="\oplus" title="Direct Sum">⊕</Button>
+            <Button symbol="^c" title="Complement">xᶜ</Button>
           </div>
         </div>
 
         <div id="Bigoperators" className={`button-panel ${activeTab !== 'Bigoperators' ? 'hide' : ''}`}>
           <div className="button-grid">
-            <Button command="cmd" symbol="\int_{}^{}\left( {} \right)" title="Integral">
+            <Button symbol="\int_{}^{}\left( {} \right)" title="Integral">
               <span className="math-display">∫</span>
             </Button>
-            <Button command="write" symbol="\oint" title="Contour Integral">
+            <Button symbol="\oint" title="Contour Integral">
               <span className="math-display">∮</span>
             </Button>
-            <Button command="cmd" symbol="\sum_{}^{}" title="Summation">
+            <Button symbol="\sum_{}^{}" title="Summation">
               <span className="math-display">∑</span>
             </Button>
-            <Button command="write" symbol="\prod" title="Product">
+            <Button symbol="\prod" title="Product">
               <span className="math-display">∏</span>
             </Button>
-            <Button command="write" symbol="\lim _{x\to }\left(\right)" title="Limit">lim</Button>
-            <Button command="write" symbol="\frac{d}{dx}\left( {} \right)" title="Derivative">d/dx</Button>
-            <Button command="write" symbol="\frac{\partial}{\partial x}\left( {} \right)" title="Partial Derivative">∂/∂x</Button>
-            <Button command="write" symbol="f'\left( {} \right)" title="Prime">f'</Button>
-            <Button command="write" symbol="f''\left( {} \right)" title="Double Prime">f''</Button>
+            <Button symbol="\lim _{x\to }\left(\right)" title="Limit">lim</Button>
+            <Button symbol="\frac{d}{dx}\left( {} \right)" title="Derivative">d/dx</Button>
+            <Button symbol="\frac{\partial}{\partial x}\left( {} \right)" title="Partial Derivative">∂/∂x</Button>
+            <Button symbol="f'\left( {} \right)" title="Prime">f'</Button>
+            <Button symbol="f''\left( {} \right)" title="Double Prime">f''</Button>
           </div>
         </div>
 
         <div id="Suggestions" className={`button-panel ${activeTab !== 'Suggestions' ? 'hide' : ''}`}>
           <div className="button-grid">
-            <Button command="cmd" symbol="\text{simplify}\ " title="Simplify">simplify</Button>
-            <Button command="cmd" symbol="\text{solve for}\ " title="Solve for">solve for</Button>
-            <Button command="cmd" symbol="\text{inverse}\ " title="Inverse">inverse</Button>
-            <Button command="cmd" symbol="\text{tangent}\ " title="Tangent">tangent</Button>
-            <Button command="cmd" symbol="\text{line}\ " title="Line">line</Button>
-            <Button command="cmd" symbol="\text{area}\ " title="Area">area</Button>
-            <Button command="cmd" symbol="\text{asymptotes}\ " title="Asymptotes">asymptotes</Button>
-            <Button command="cmd" symbol="\text{critical points}\ " title="Critical Points">critical points</Button>
-            <Button command="cmd" symbol="\text{derivative}\ " title="Derivative">derivative</Button>
-            <Button command="cmd" symbol="\text{domain}\ " title="Domain">domain</Button>
-            <Button command="cmd" symbol="\text{eigenvalues}\ " title="Eigenvalues">eigenvalues</Button>
+            <Button symbol="\text{simplify}\ " title="Simplify">simplify</Button>
+            <Button symbol="\text{solve for}\ " title="Solve for">solve for</Button>
+            <Button symbol="\text{inverse}\ " title="Inverse">inverse</Button>
+            <Button symbol="\text{tangent}\ " title="Tangent">tangent</Button>
+            <Button symbol="\text{line}\ " title="Line">line</Button>
+            <Button symbol="\text{area}\ " title="Area">area</Button>
+            <Button symbol="\text{asymptotes}\ " title="Asymptotes">asymptotes</Button>
+            <Button symbol="\text{critical points}\ " title="Critical Points">critical points</Button>
+            <Button symbol="\text{derivative}\ " title="Derivative">derivative</Button>
+            <Button symbol="\text{domain}\ " title="Domain">domain</Button>
+            <Button symbol="\text{eigenvalues}\ " title="Eigenvalues">eigenvalues</Button>
           </div>
         </div>
       </div>
@@ -468,7 +472,7 @@ const handleRightClick = () => {
       <div className="action-buttons">
         <button className='left-click' onClick={handleLeftClick}>←</button>
         <button className='right-click' onClick={handleRightClick}>→</button>
-        <button className="clear-math-button" onClick={clearEditor}>Clear</button>
+        <button className="clear-math-button" onClick={() => clear()}>Clear</button>
       </div>
     </div>
   );

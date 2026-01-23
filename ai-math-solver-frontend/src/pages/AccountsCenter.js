@@ -1,21 +1,50 @@
+/**
+ * Accounts Center Page
+ * 
+ * User account management dashboard with sections for:
+ * - Profile Details: Edit name, view registration date
+ * - Login Options: View connected authentication methods (Email, Google, Local)
+ * - Settings: Clear history and bookmarks
+ * - Delete Account: Permanently delete account with confirmation
+ * 
+ * Uses sidebar navigation to scroll between sections
+ * Only accessible to authenticated users
+ */
+
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AccessDenied from '../components/AccessDenied/AccessDenied';
+import { useAuth } from '../hooks/useAuth';
+import {
+  updateUserProfile,
+  deleteUserAccount,
+  clearUserHistory,
+  clearUserLibrary,
+} from '../services/userService';
 import './AccountsCenter.css';
 
-function AccountsCenter({ user, onLogout }) {
+/**
+ * AccountsCenter Component
+ * Displays user account management interface
+ * Requires authenticated user - redirects to access denied if not logged in
+ */
+function AccountsCenter() {
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  
+  // Complete user data from auth context
   const [userData, setUserData] = useState(null);
+  // User's first name (editable)
   const [firstName, setFirstName] = useState('');
+  // User's last name (editable)
   const [lastName, setLastName] = useState('');
+  // Loading state during API calls
   const [loading, setLoading] = useState(false);
 
-  const getAuthHeaders = () => {
-  const token = localStorage.getItem('jwt_token');
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
-  };
-};
-
+  /**
+   * Initialize form with user data when component mounts
+   * Splits name into first and last name for editing
+   */
   useEffect(() => {
     if (user) {
       setUserData(user);
@@ -25,186 +54,155 @@ function AccountsCenter({ user, onLogout }) {
     }
   }, [user]);
 
+  // Redirect to access denied if not authenticated
   if (!user) {
     return <AccessDenied />;
   }
 
+  /**
+   * Save profile changes (name)
+   * Updates user data on backend
+   */
   const handleSaveChanges = async () => {
-  if (!user) return;
-  
-  setLoading(true);
-  try {
-    const response = await fetch(`/users/profile`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      // Call API to update profile
+      const result = await updateUserProfile({
         Name: `${firstName} ${lastName}`.trim()
-      })
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      setUserData(data.user);
-      alert('Changes saved successfully!');
-    } else {
-      if (response.status === 401) {
-        localStorage.removeItem('jwt_token');
-        alert('Session expired. Please log in again.');
-        window.location.href = '/login';
-      } else {
-        const error = await response.json();
-        alert(`Failed to save changes: ${error.message}`);
-      }
-    }
-  } catch (err) {
-    console.error('Error saving changes:', err);
-    alert('Failed to save changes. Please try again.');
-  } finally {
-    setLoading(false);
-  }
-};
+      });
 
-const handleClearHistory = async () => {
-  if (!user) return;
-  
-  if (!window.confirm('Are you sure you want to clear your history?')) return;
-  
-  setLoading(true);
-  try {
-    const response = await fetch(`/users/history`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    });
-    
-    if (response.ok) {
-      alert('History cleared successfully!');
-    } else {
-      if (response.status === 401) {
-        localStorage.removeItem('jwt_token');
-        alert('Session expired. Please log in again.');
-        window.location.href = '/login';
+      if (result.success) {
+        setUserData(result.user);
+        alert('Changes saved successfully!');
       } else {
-        const error = await response.json();
-        alert(`Failed to clear history: ${error.message}`);
+        alert(`Failed to save changes: ${result.error}`);
       }
+    } catch (err) {
+      console.error('Error saving changes:', err);
+      alert('Failed to save changes. Please try again.');
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error('Error clearing history:', err);
-    alert('Failed to clear history. Please try again.');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
+  /**
+   * Clear user's problem-solving history
+   * Requires confirmation before proceeding
+   */
+  const handleClearHistory = async () => {
+    if (!user) return;
+    
+    // Ask for user confirmation
+    if (!window.confirm('Are you sure you want to clear your history?')) return;
+    
+    setLoading(true);
+    try {
+      // Call API to clear history
+      const result = await clearUserHistory();
+      
+      if (result.success) {
+        alert('History cleared successfully!');
+      } else {
+        alert(`Failed to clear history: ${result.error}`);
+      }
+    } catch (err) {
+      console.error('Error clearing history:', err);
+      alert('Failed to clear history. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Clear all user's bookmarks
+   * Requires confirmation before proceeding
+   */
   const handleClearLibrary = async () => {
-  if (!user) return;
-  
-  if (!window.confirm('Are you sure you want to clear all bookmarks?')) return;
-  
-  setLoading(true);
-  try {
-    const response = await fetch(`/users/library`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    });
+    if (!user) return;
     
-    if (response.ok) {
-      alert('Bookmarks cleared successfully!');
-    } else {
-      if (response.status === 401) {
-        localStorage.removeItem('jwt_token');
-        alert('Session expired. Please log in again.');
-        window.location.href = '/login';
+    // Ask for user confirmation
+    if (!window.confirm('Are you sure you want to clear all bookmarks?')) return;
+    
+    setLoading(true);
+    try {
+      // Call API to clear bookmarks
+      const result = await clearUserLibrary();
+      
+      if (result.success) {
+        alert('Bookmarks cleared successfully!');
       } else {
-        const error = await response.json();
-        alert(`Failed to clear bookmarks: ${error.message}`);
+        alert(`Failed to clear bookmarks: ${result.error}`);
       }
+    } catch (err) {
+      console.error('Error clearing bookmarks:', err);
+      alert('Failed to clear bookmarks. Please try again.');
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error('Error clearing bookmarks:', err);
-    alert('Failed to clear bookmarks. Please try again.');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
+  /**
+   * Permanently delete user account
+   * Requires two confirmations:
+   * 1. Initial confirmation dialog
+   * 2. Typing "DELETE" in prompt
+   * Logs out user and redirects to home
+   */
   const handleDeleteAccount = async () => {
-  if (!user) return;
-  
-  if (!window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) return;
-  
-  const confirmText = window.prompt('Type "DELETE" to confirm account deletion:');
-  if (confirmText !== 'DELETE') {
-    alert('Account deletion cancelled.');
-    return;
-  }
-  
-  setLoading(true);
-  try {
-    const response = await fetch(`/users/profile`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    });
+    if (!user) return;
     
-    if (response.ok) {
-      localStorage.removeItem('jwt_token');
-      alert('Account deleted successfully. You will be redirected to the home page.');
-      if (onLogout) onLogout();
-      window.location.href = '/';
-    } else {
-      const error = await response.json();
-      alert(`Failed to delete account: ${error.message}`);
+    // First confirmation dialog
+    if (!window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+      return;
     }
-  } catch (err) {
-    console.error('Error deleting account:', err);
-    alert('Failed to delete account. Please try again.');
-  } finally {
-    setLoading(false);
-  }
-};
-
-const handleLogout = async () => {
-  try {
-    const token = localStorage.getItem('jwt_token');
     
-    await fetch('/auth/logout', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`
+    // Second confirmation - user must type "DELETE"
+    const confirmText = window.prompt('Type "DELETE" to confirm account deletion:');
+    if (confirmText !== 'DELETE') {
+      alert('Account deletion cancelled.');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      // Call API to delete account
+      const result = await deleteUserAccount();
+      
+      if (result.success) {
+        alert('Account deleted successfully. Redirecting...');
+        // Logout and redirect to home
+        logout();
+        setTimeout(() => navigate('/'), 1500);
+      } else {
+        alert(`Failed to delete account: ${result.error}`);
       }
-    });
-    
-    localStorage.removeItem('jwt_token');
-    if (onLogout) onLogout();
-    window.location.href = '/login';
-  } catch (err) {
-    console.error('Error logging out:', err);
-    localStorage.removeItem('jwt_token');
-    if (onLogout) onLogout();
-    window.location.href = '/login';
-  }
-};
+    } catch (err) {
+      console.error('Error deleting account:', err);
+      alert('Failed to delete account. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  if (!user) {
-    return (
-      <div className="login-prompt-container">
-        <div>
-          <h2 className="login-prompt-heading">Please log in to view your account settings</h2>
-          <button className="login-button" onClick={() => window.location.href = '/login'}>
-            Go to Login
-          </button>
-        </div>
-      </div>
-    );
-  }
+  /**
+   * Logout and redirect to login page
+   */
+  const handleLogout = async () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <div className="accounts-center-container">
       <div className="accounts-center-wrapper">
+        {/* Left sidebar with navigation */}
         <div className="sidebar-container">
           <div className="sidebar">
             <h2 className="sidebar-heading">Account Settings</h2>
             
+            {/* Profile details navigation item */}
             <div className="sidebar-item" onClick={() => document.getElementById('pd')?.scrollIntoView({ behavior: 'smooth' })}>
               <svg viewBox="0 0 24 24" className="sidebar-icon" fill="none">
                 <path opacity="0.4" d="M12.1207 12.78C12.0507 12.77 11.9607 12.77 11.8807 12.78C10.1207 12.72 8.7207 11.28 8.7207 9.50998C8.7207 7.69998 10.1807 6.22998 12.0007 6.22998C13.8107 6.22998 15.2807 7.69998 15.2807 9.50998C15.2707 11.28 13.8807 12.72 12.1207 12.78Z" stroke="#292D32" strokeWidth="1.5" />
@@ -213,6 +211,7 @@ const handleLogout = async () => {
               <span className="sidebar-text">Profile Details</span>
             </div>
 
+            {/* Login options navigation item */}
             <div className="sidebar-item" onClick={() => document.getElementById('ld')?.scrollIntoView({ behavior: 'smooth' })}>
               <svg viewBox="0 0 24 24" className="sidebar-icon" fill="none">
                 <path d="M2.00098 11.999L16.001 11.999M16.001 11.999L12.501 8.99902M16.001 11.999L12.501 14.999" stroke="#1C274C" strokeWidth="1.5" />
@@ -221,6 +220,7 @@ const handleLogout = async () => {
               <span className="sidebar-text">Login Options</span>
             </div>
 
+            {/* Settings navigation item */}
             <div className="sidebar-item" onClick={() => document.getElementById('s')?.scrollIntoView({ behavior: 'smooth' })}>
               <svg viewBox="0 0 24 24" className="sidebar-icon" fill="none">
                 <circle cx="12" cy="12" r="3" stroke="#1C274C" strokeWidth="1.5" />
@@ -229,6 +229,7 @@ const handleLogout = async () => {
               <span className="sidebar-text">Settings</span>
             </div>
 
+            {/* Logout button */}
             <div className="sidebar-item-logout" onClick={handleLogout}>
               <svg viewBox="0 0 24 24" className="sidebar-icon" fill="none">
                 <path d="M15 11.25C15.4142 11.25 15.75 11.5858 15.75 12C15.75 12.4142 15.4142 12.75 15 12.75H4.02744L5.98809 14.4306C6.30259 14.7001 6.33901 15.1736 6.06944 15.4881C5.79988 15.8026 5.3264 15.839 5.01191 15.5694L1.51191 12.5694C1.34567 12.427 1.25 12.2189 1.25 12C1.25 11.7811 1.34567 11.573 1.51191 11.4306L5.01191 8.43056C5.3264 8.16099 5.79988 8.19741 6.06944 8.51191C6.33901 8.8264 6.30259 9.29988 5.98809 9.56944L4.02744 11.25H15Z" fill="#1C274C" />
@@ -238,12 +239,16 @@ const handleLogout = async () => {
           </div>
         </div>
 
+        {/* Main content area with account settings sections */}
         <div className="content-container">
+          {/* Section 1: Profile Details */}
           <div id="pd" className="content-section">
             <h2 className="section-heading">Profile Details</h2>
             <div className="profile-grid">
               <label htmlFor="fname" className="form-label">First name:</label>
               <label htmlFor="lname" className="form-label">Last name:</label>
+              
+              {/* First name input */}
               <input
                 type="text"
                 id="fname"
@@ -253,6 +258,8 @@ const handleLogout = async () => {
                 disabled={loading}
                 className="form-input"
               />
+              
+              {/* Last name input */}
               <input
                 type="text"
                 id="lname"
@@ -262,6 +269,8 @@ const handleLogout = async () => {
                 disabled={loading}
                 className="form-input"
               />
+              
+              {/* Registration date (read-only) */}
               <label htmlFor="regdate" className="form-label">Registration Date:</label>
               <div></div>
               <input
@@ -273,6 +282,7 @@ const handleLogout = async () => {
                 className="form-input-disabled"
               />
             </div>
+            {/* Save button for profile changes */}
             <button 
               onClick={handleSaveChanges} 
               disabled={loading}
@@ -282,9 +292,11 @@ const handleLogout = async () => {
             </button>
           </div>
 
+          {/* Section 2: Login Options */}
           <div id="ld" className="content-section">
             <h2 className="section-heading">Login Options</h2>
             <div className="login-options-grid">
+              {/* Email field (read-only) */}
               <label htmlFor="email" className="form-label">Email:</label>
               <input
                 type="text"
@@ -294,6 +306,8 @@ const handleLogout = async () => {
                 disabled
                 className="form-input-disabled"
               />
+              
+              {/* Google connection status (read-only) */}
               <label htmlFor="google" className="form-label">Google:</label>
               <input
                 type="text"
@@ -303,6 +317,8 @@ const handleLogout = async () => {
                 disabled
                 className="form-input-disabled"
               />
+              
+              {/* Local authentication status (read-only) */}
               <label htmlFor="local" className="form-label">Local Authentication:</label>
               <input
                 type="text"
@@ -315,9 +331,11 @@ const handleLogout = async () => {
             </div>
           </div>
 
+          {/* Section 3: Settings */}
           <div id="s" className="content-section">
             <h2 className="section-heading">Settings</h2>
             <div className="settings-container">
+              {/* Clear history option */}
               <div className="settings-row-history">
                 <label htmlFor="history" className="settings-label">History:</label>
                 <button 
@@ -328,6 +346,8 @@ const handleLogout = async () => {
                   Clear
                 </button>
               </div>
+              
+              {/* Clear bookmarks option */}
               <div className="settings-row-bookmarks">
                 <label htmlFor="library" className="settings-label">Bookmarks:</label>
                 <button 
@@ -341,6 +361,7 @@ const handleLogout = async () => {
             </div>
           </div>
 
+          {/* Section 4: Delete Account (Danger zone) */}
           <div id="da" className="content-section">
             <h2 className="section-heading-warning">Delete Account</h2>
             <p className="delete-warning">

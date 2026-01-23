@@ -1,3 +1,19 @@
+/**
+ * Forgot Password Page
+ * 
+ * Password recovery flow:
+ * - User enters email address
+ * - Backend sends password reset email
+ * - Shows confirmation with instructions
+ * - User clicks link in email to reset password
+ * 
+ * States:
+ * - 'form': Show email input form
+ * - 'loading': Processing request
+ * - 'sent': Confirmation message shown
+ * - 'error': Error occurred
+ */
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, AlertCircle } from 'lucide-react';
@@ -6,30 +22,48 @@ import FormInput from '../components/FormInput/FormInput';
 import AlertMessage from '../components/AlertMessage/AlertMessage';
 import './ForgotPasswordPage.css';
 
+/**
+ * ForgotPasswordPage Component
+ * Handles password reset request submission
+ */
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
+  // Email address entered by user
   const [email, setEmail] = useState('');
+  // Current UI state
   const [status, setStatus] = useState('form'); // form, loading, sent, error
+  // Success message from server
   const [message, setMessage] = useState('');
+  // Error message to display
   const [error, setError] = useState('');
 
+  /**
+   * Set page title for browser tab
+   */
   useEffect(() => {
     document.title = 'Forgot Password - AI Math Solver';
   }, []);
 
+  /**
+   * Handle form submission
+   * Sends email to backend to trigger password reset email
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setMessage('');
 
+    // Validate email entered
     if (!email) {
       setError('Please enter your email address');
       return;
     }
 
+    // Show loading state
     setStatus('loading');
 
     try {
+      // Send password reset request to backend
       const response = await fetch('/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -39,13 +73,16 @@ export default function ForgotPasswordPage() {
       const data = await response.json();
 
       if (response.ok) {
+        // Request successful - show confirmation
         setStatus('sent');
         setMessage(data.message);
       } else {
+        // Request failed
         setStatus('error');
         setError(data.message || 'Failed to send reset email');
       }
     } catch (err) {
+      // Network or server error
       setStatus('error');
       setError('An error occurred. Please try again.');
       console.error(err);
@@ -55,6 +92,7 @@ export default function ForgotPasswordPage() {
   return (
     <div className="forgot-password-container">
       <div className="forgot-password-wrapper">
+        {/* Form state - show email input */}
         {status === 'form' && (
           <>
             <div className="forgot-password-header">
@@ -65,8 +103,10 @@ export default function ForgotPasswordPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="forgot-password-form">
+              {/* Display any error or success messages */}
               <AlertMessage error={error} success={message} />
 
+              {/* Email input field */}
               <FormInput
                 label="Email Address"
                 type="email"
@@ -76,10 +116,12 @@ export default function ForgotPasswordPage() {
                 icon={<Mail size={20} />}
               />
 
+              {/* Submit button */}
               <button type="submit" className="submit-button">
                 Send Reset Link
               </button>
 
+              {/* Link back to login */}
               <div className="back-to-login-wrapper">
                 <span className="back-to-login-text">Back to </span>
                 <button
@@ -94,6 +136,7 @@ export default function ForgotPasswordPage() {
           </>
         )}
         
+        {/* Loading state - show spinner */}
         {status === 'loading' && (
           <div className="forgot-password-status">
             <div className="loading-spinner"></div>
@@ -101,6 +144,7 @@ export default function ForgotPasswordPage() {
           </div>
         )}
 
+        {/* Sent state - show success message */}
         {status === 'sent' && (
           <div className="forgot-password-status success">
             <div className="status-icon success-icon">
@@ -122,6 +166,7 @@ export default function ForgotPasswordPage() {
           </div>
         )}
 
+        {/* Error state - show error message */}
         {status === 'error' && (
           <div className="forgot-password-status error">
             <div className="status-icon error-icon">

@@ -1,5 +1,22 @@
+/**
+ * Main Application Component
+ * 
+ * Root component that:
+ * - Sets up routing with React Router
+ * - Wraps entire app with global context providers
+ * - Manages authentication flow
+ * - Handles OAuth token handling
+ * 
+ * Architecture:
+ * App (Router + Providers)
+ * └─ AppContent (Routes and Layout)
+ *    ├─ Navbar
+ *    ├─ Routes (pages)
+ *    └─ Footer
+ */
+
+import React, { useEffect } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { useState, useEffect } from "react";
 import Navbar from "./components/Navbar/Navbar";
 import Footer from "./components/Footer/Footer";
 import Home from "./pages/Home";
@@ -13,79 +30,80 @@ import NotFound from './components/NotFound/NotFound';
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import { AuthProvider, AuthContext } from "./context/AuthContext";
+import { SolutionProvider } from "./context/SolutionContext";
+import { storeToken } from "./services/api";
 
-function App() {
-  const [user, setUser] = useState(null);
+/**
+ * Application Content Component
+ * Contains all routes and layout elements
+ * Placed inside providers so it can access context
+ */
+function AppContent() {
+  const authContext = React.useContext(AuthContext);
+  const { user, logout } = authContext;
 
+  /**
+   * Handle OAuth callback
+   * When backend redirects to app with token in URL,
+   * store token and reload to reinitialize auth
+   */
   useEffect(() => {
-    async function checkAuth() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const tokenFromUrl = urlParams.get('token');
-      
-      if (tokenFromUrl) {
-        localStorage.setItem('jwt_token', tokenFromUrl);
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }     
-
-      const token = localStorage.getItem('jwt_token');      
-      if (!token) {
-        return; 
-      }
-
-      try {
-        const res = await fetch("/auth/me", {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          if (data.authenticated && data.user) {
-            console.log(data.user);
-            setUser(data.user);
-          }
-        } else {
-          // Token invalid or expired
-          localStorage.removeItem('jwt_token');
-        }
-      } catch (err) {
-        console.error("Error checking auth:", err);
-        localStorage.removeItem('jwt_token');
-      }
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenFromUrl = urlParams.get('token');
+    
+    if (tokenFromUrl) {
+      // Store OAuth token from redirect
+      storeToken(tokenFromUrl);
+      // Remove token from URL for clean state
+      window.history.replaceState({}, document.title, window.location.pathname);
+      // Reload app to reinitialize auth with new token
+      window.location.reload();
     }
-    checkAuth();
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('jwt_token');
-    setUser(null);
-  };
-
-  const handleLogin = (userData, token) => {
-    localStorage.setItem('jwt_token', token);
-    setUser(userData);
-  };
-
   return (
-    <BrowserRouter>
-      <div className="App">
-        <Navbar logo={logo} user={user} onLogout={handleLogout}/>
-        <div className="App-content">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/solutions" element={<Solutions user={user}/>} />
-            <Route path="/bookmarks" element={<BookmarksPage user={user}/>} />
-            <Route path="/login" element={<LoginPage onLogin={handleLogin}/>} />
-            <Route path="/account" element={<AccountsCenter user={user} onLogout={handleLogout}/>} />
-            <Route path="/verify-email" element={<VerifyEmailPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </div>
-        <Footer logo={logo} />
+    <div className="App">
+      {/* Header with navigation */}
+      <Navbar logo={logo} user={user} onLogout={logout}/>
+      
+      {/* Main content area with page routes */}
+      <div className="App-content">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/solutions" element={<Solutions />} />
+          <Route path="/bookmarks" element={<BookmarksPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/account" element={<AccountsCenter />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </div>
+      
+      {/* Footer */}
+      <Footer logo={logo} />
+    </div>
+  );
+}
+
+/**
+ * Root Application Component
+ * Initializes router and global context providers
+ */
+function App() {
+  return (
+    // Router setup for client-side navigation
+    <BrowserRouter>
+      {/* Authentication context - provides useAuth() hook */}
+      <AuthProvider>
+        {/* Solution context - provides useSolution() hook */}
+        <SolutionProvider>
+          {/* Main app content and routing */}
+          <AppContent />
+        </SolutionProvider>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

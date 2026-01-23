@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import FormInput from '../FormInput/FormInput';
 import AlertMessage from '../AlertMessage/AlertMessage';
+import { login } from '../../services/authService';
+import { validateEmail } from '../../utils/validation';
 import './LoginForm.css';
 
 export default function LoginForm({ onSuccess }) {
@@ -27,32 +29,30 @@ export default function LoginForm({ onSuccess }) {
       return;
     }
 
+    if (!validateEmail(email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const response = await fetch('/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email, password }),
-      });
+      const result = await login(email, password);
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setSuccessMessage(data.message);
-        onSuccess(data.user);
-        localStorage.setItem('jwt_token', data.token);
-      } else if (response.status === 403 && data.emailUnverified) {
-        setEmailUnverified(true);
-        setUnverifiedEmail(data.email);
-        setError(data.message || 'Please verify your email before logging in.');
+      if (result.success) {
+        setSuccessMessage('Login successful! Redirecting...');
+        onSuccess(result.user, result.token);
       } else {
-        setError(data.message || 'Authentication failed');
+        // Check if email is unverified
+        if (result.error?.includes('verify')) {
+          setEmailUnverified(true);
+          setUnverifiedEmail(email);
+        }
+        setError(result.error || 'Login failed. Please try again.');
       }
     } catch (err) {
-      setError('An error occurred. Please try again.');
-      console.error(err);
+      setError(err.message || 'An error occurred. Please try again.');
+      console.error('Login error:', err);
     } finally {
       setLoading(false);
     }
