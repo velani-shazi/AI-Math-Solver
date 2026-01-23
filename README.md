@@ -54,35 +54,6 @@ EMAIL_FROM="AI Math Solver <no-reply@example.com>"  # optional, defaults to EMAI
 > ⚠️ Use your own API keys, SMTP credentials, and secrets.
 > Never commit environment variables to version control.
 
-## ✉️ Email & Auth (Verification and Password Reset)
-
-- **What changed:** The app now sends emails for email verification (manual signup), resending verification links, password reset (forgot/reset), and welcome emails for new Google OAuth users.
-
-- **Endpoints (POST):**
-  - `/auth/signup` — create account (verification email sent on manual signup)
-  - `/auth/verify-email` — body: `{ token }` to verify account
-  - `/auth/resend-verification` — body: `{ email }` to resend verification link
-  - `/auth/forgot-password` — body: `{ email }` to request a password reset link
-  - `/auth/reset-password` — body: `{ token, newPassword }` to reset password
-
-- **Notes:**
-  - Verification tokens expire in **24 hours**; password reset tokens expire in **1 hour**.
-  - Manual signups require email verification before login; Google signups are auto-verified and receive a welcome email.
-  - The frontend now shows UIs for unverified accounts (resend verification) and a post-signup "Account Created" screen.
-
-- **Quick examples:**
-  - Verify email:
-
-    ```bash
-    curl -X POST -H "Content-Type: application/json" -d '{"token":"<token>"}' http://localhost:5000/auth/verify-email
-    ```
-
-  - Request password reset:
-
-    ```bash
-    curl -X POST -H "Content-Type: application/json" -d '{"email":"you@example.com"}' http://localhost:5000/auth/forgot-password
-    ```
-
 ---
 
 ## 🛠️ **How to Run the Project**
